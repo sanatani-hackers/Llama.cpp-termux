@@ -1,12 +1,12 @@
 # Local AI on Android: Stable Diffusion & LLMs via Termux
 
-The ultimate guide for running High-Performance Local AI (Image Generation and Large Language Models) directly on your Android phone using Termux.
+Welcome to the ultimate guide for running High-Performance Local AI (Image Generation and Large Language Models) directly on your Android phone using Termux.
 
-This repository documents the exact commands, driver configurations, and fixes needed to run Stable Diffusion 1.5, Llama 3.2 (1B), Qwen 2.5 (1.5B), and BitNet models natively on modern Android hardware (specifically tested on Snapdragon 7 Gen 3). **No root required.**
+This repository documents the exact commands, driver configurations, and fixes needed to run Stable Diffusion 1.5, Llama 3.2 (1B), Qwen 2.5 (1.5B), and BitNet models natively on modern Android hardware (specifically tested on the Snapdragon 7 Gen 3). **No root required.**
 
 ## 🛠️ Step 1: System Prerequisites
 
-Prepare your Termux environment with necessary compilers and custom open-source Vulkan drivers (Turnip/Mesa):
+Before building anything, prepare your Termux environment with the necessary compilers and custom open-source Vulkan drivers (Turnip/Mesa).
 
 ```bash
 # Update system and install base build tools
@@ -24,7 +24,7 @@ pkg install mesa-vulkan-icd-freedreno-dri3
 ## 🎨 Step 2: Stable Diffusion (Image Generation)
 
 > **⚠️ DANGER ZONE: GPU vs. CPU for Stable Diffusion**
-> 
+>
 > On newer Snapdragon chips (like the 7 Gen 3), the GPU/Vulkan build of Stable Diffusion can cause massive VRAM spikes, leading to the Android Low Memory Killer (LMK) crashing Termux or freezing your phone. **We highly recommend using the CPU build.**
 
 ### Build the CPU Engine
@@ -55,7 +55,7 @@ wget https://huggingface.co/second-state/stable-diffusion-v1-5-GGUF/resolve/main
 
 ## 🤖 Step 3: Large Language Models (LLMs)
 
-Use a specialized fork (`qvac-fabric-llm.cpp`) to run standard GGUFs and cutting-edge 1.58-bit (BitNet) models:
+We use a specialized fork (`qvac-fabric-llm.cpp`) to run standard GGUFs and cutting-edge 1.58-bit (BitNet) models.
 
 ```bash
 cd ~
@@ -71,7 +71,7 @@ wget https://huggingface.co/qvac/fabric-llm-finetune-bitnet/resolve/main/1bitLLM
 
 ### Option A: CPU Build (Recommended for Pure Speed)
 
-The CPU build utilizing NEON instructions is the fastest way to generate text on modern SoCs (~14 tokens/sec):
+The CPU build utilizing NEON instructions is the fastest way to generate text on modern SoCs.
 
 ```bash
 mkdir build-cpu && cd build-cpu
@@ -87,7 +87,7 @@ cmake --build . --config Release -j $(nproc)
 
 ### Option B: GPU/Vulkan Build (Using Mesa Turnip Drivers)
 
-The official Adreno drivers crash on complex AI shader compilation. Bypass this by forcing the system to use open-source Turnip (Mesa) drivers:
+The official Adreno drivers crash on complex AI shader compilation. We bypass this by forcing the system to use open-source Turnip (Mesa) drivers.
 
 ```bash
 mkdir build-gpu && cd build-gpu
@@ -100,18 +100,45 @@ export ASAN_OPTIONS=detect_leaks=0
 cmake --build . --config Release -j $(nproc)
 ```
 
-**To run the GPU build safely**, you MUST export the Turnip paths and use fewer threads (-t 3 max) to prevent memory bottlenecking:
+To run the GPU build safely, you MUST export the Turnip paths and use fewer threads (`-t 3` max) to prevent memory bottlenecking:
 
 ```bash
 export VK_ICD_FILENAMES=$PREFIX/share/vulkan/icd.d/freedreno_icd.aarch64.json 
 export LD_LIBRARY_PATH=$HOME/qvac-fabric-llm.cpp/build-gpu/bin:$LD_LIBRARY_PATH
 
-./build-gpu/bin/llama-cli -m ../models/qwen2.5-1.5b.gguf -ngl 99 -t 3 -p "Hi"
+./build-gpu/bin/llama-cli -m models/qwen2.5-1.5b.gguf -ngl 99 -t 3 -p "Hi"
 ```
+
+## 📊 Performance Benchmarks (Snapdragon 7 Gen 3)
+
+These benchmarks were recorded on a Snapdragon 7 Gen 3 (Adreno 720) with 8GB of RAM running native Termux.
+
+### 🎨 Image Generation (Stable Diffusion 1.5)
+
+*Settings: 512x512 resolution, 15 Steps, Euler A sampler, Q4_0 Quantized Model*
+
+| Build Type | Backend | Threads | Time to Generate | Stability |
+|------------|---------|---------|------------------|-----------|
+| CPU (NEON) | OpenMP | `-t 4` | ~1.5 to 2 Minutes | ✅ 100% Stable |
+| GPU (Vulkan) | Adreno | N/A | N/A | ❌ Crashes Phone (VRAM Spike / LMK trigger) |
+
+### 🤖 Text Generation (LLMs)
+
+Testing CPU (NEON) vs GPU (Turnip driver) memory bottlenecks across 3 different models.
+
+| Model | Backend | Threads | Speed (Tokens/Sec) | Notes |
+|-------|---------|---------|--------------------|-------|
+| Llama 3.2 (1B) (Q4_K_M) | CPU | `-t 5` | ~14.0 t/s | 🏆 Extremely fast and stable |
+| Llama 3.2 (1B) (Q4_K_M) | GPU (Turnip) | `-t 3` | ~4.0 t/s | Offloads perfectly to GPU |
+| Qwen 2.5 (1.5B) (Q4_K_M) | CPU | `-t 5` | ~14.2 t/s | 🏆 Fastest overall performance |
+| Qwen 2.5 (1.5B) (Q4_K_M) | GPU (Turnip) | `-t 5` | ~3.60 t/s | CPU fights GPU for memory bus (44% lag) |
+| Qwen 2.5 (1.5B) (Q4_K_M) | GPU (Turnip) | `-t 3` | ~3.64 t/s | 🔋 GPU Sweet Spot. Low lag (18.4%), battery efficient |
+| BitNet XL (1.58b) (TQ1_0) | CPU | `-t 5` | Fast | Extreme low RAM usage (1-bit weights) |
+| BitNet XL (1.58b) (TQ1_0) | GPU (Turnip) | `-t 3` | Stable | Runs fully offloaded to Adreno 720 |
 
 ## 🚨 Troubleshooting: Errors vs. Successes
 
-Compare your terminal output to these examples to find the fix.
+If things break, compare your terminal output to these examples to find the fix.
 
 ### ❌ Error 1: The "Tagged Pointer" Crash
 
@@ -123,6 +150,7 @@ Segmentation fault
 Happens immediately when trying to compile `cmake --build` or run `llama-cli`.
 
 **The Fix:** Android 11+ has strict memory tagging. Disable it for the session:
+
 ```bash
 export ASAN_OPTIONS=detect_leaks=0
 ```
@@ -134,7 +162,8 @@ export ASAN_OPTIONS=detect_leaks=0
 Could NOT find Vulkan (missing: Vulkan_INCLUDE_DIR glslc)
 ```
 
-**The Fix:** You are missing the shader compiler headers:
+**The Fix:** You are missing the shader compiler headers.
+
 ```bash
 pkg install vulkan-headers shaderc
 ```
@@ -151,6 +180,7 @@ Segmentation fault
 ```
 
 **The Fix:** The official Qualcomm driver cannot handle Q4_K math. You MUST switch to the Turnip driver:
+
 ```bash
 export VK_ICD_FILENAMES=$PREFIX/share/vulkan/icd.d/freedreno_icd.aarch64.json
 ```
@@ -165,7 +195,8 @@ export VK_ICD_FILENAMES=$PREFIX/share/vulkan/icd.d/freedreno_icd.aarch64.json
 Available devices:
 ```
 
-**The Fix:** Termux doesn't know where your compiled GPU libraries are:
+**The Fix:** Termux doesn't know where your compiled GPU libraries are.
+
 ```bash
 export LD_LIBRARY_PATH=$HOME/qvac-fabric-llm.cpp/build-gpu/bin:$LD_LIBRARY_PATH
 ```
@@ -173,24 +204,14 @@ export LD_LIBRARY_PATH=$HOME/qvac-fabric-llm.cpp/build-gpu/bin:$LD_LIBRARY_PATH
 ### ✅ SUCCESS: What a perfect GPU run looks like
 
 If your environment variables are correct, running `--list-devices` or initiating the chat will output this specific line:
+
 ```
 ggml_vulkan: Found 1 Vulkan devices:
 ggml_vulkan: 0 = Turnip Adreno (TM) 720 (turnip Mesa driver) | uma: 1 | fp16: 1
 ```
-
-## 📊 Threading Benchmarks (Snapdragon 7 Gen 3)
-
-**Why not use 5+ threads on the GPU?** Because the CPU and GPU share the same memory (UMA). If the CPU uses too many threads, it blocks the GPU from accessing RAM, increasing "unaccounted time" (lag).
-
-| Mode | Threads | Tokens/Sec | Unaccounted Time (Lag) | Note |
-|------|---------|------------|------------------------|------|
-| CPU (NEON) | `-t 5` | ~14.2 t/s | Low | Fastest option. Best for daily use. |
-| GPU (Turnip) | `-t 5` | ~3.60 t/s | 44.3% (High) | High CPU interference. |
-| GPU (Turnip) | `-t 3` | ~3.64 t/s | 18.4% (Low) | GPU Sweet Spot. Best battery efficiency. |
 
 ## 📝 License & Credits
 
 **License:** MIT
 
 **Credits:** Built using [llama.cpp](https://github.com/ggerganov/llama.cpp), [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp), and the amazing Turnip/Mesa open-source driver project.
-```
