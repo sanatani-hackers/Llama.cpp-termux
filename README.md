@@ -108,7 +108,7 @@ These benchmarks were recorded on a MediaTek Dimensity 8350 Ultra (CPU only) wit
 | Qwen 2.5 (1.5B) (Q4_K_M) | CPU | -t 4 | ~15.03 t/s | 🏆 Fast & stable |
 
 ## 📊 Performance Benchmarks (Vivo Y21 – Helio P35 CPU Only)
-These benchmarks were recorded on a Vivo Y21 (MediaTek Helio P35, CPU-only) running Termux. No GPU acceleration available.
+These benchmarks were recorded on a Vivo Y21 (MediaTek Helio P35, CPU-only) with 4GB RAM running Termux. No GPU acceleration available.
 | Model | Backend | Threads | Speed (Tokens/Sec) | Notes |
 |---|---|---|---|---|
 | Qwen 2.5 (1.5B) (Q4_K_M) | CPU | -t 8 | ~4.36 t/s | Decent for low-end CPU |
