@@ -38,7 +38,7 @@ detect_hardware() {
     elif [[ "$CPU_ARCH" == *"sve"* ]]; then
         CPU_VARIANT="ARMv8.2+ (SVE)"
     elif [[ "$CPU_ARCH" == *"fphp"* ]] || [[ "$CPU_ARCH" == *"asimdhp"* ]]; then
-        CPU_VARIANT="ARMv8.2-A (Half-Precision)"
+        CPU_VARIANT="armv8-a (Half-Precision)"
     else
         CPU_VARIANT="ARMv8.0-A (Generic)"
     fi
@@ -530,7 +530,7 @@ echo -e "\n${Y}--- COMPILE FROM SOURCE (Advanced) ---${N}"
 echo -e "2) Auto-Tune CPU Build (Safe & Stable)"
 if [ "$GPU_SUPPORTED" = true ]; then echo -e "3) GPU Vulkan Build (${GPU_LEVEL})"; else echo -e "${R}3) GPU Vulkan Build (DISABLED)${N}"; fi
 if [ "$TURNIP_SUPPORTED" = true ]; then echo -e "4) Turnip Open-Source Build (Adreno)"; else echo -e "${R}4) Turnip Build (DISABLED)${N}"; fi
-echo -e "5) Universal ARMv8.2-a Cross-Compile"
+echo -e "5) Universal armv8-a Cross-Compile"
 echo -e "\n${Y}--- OTHER ---${N}"
 echo -e "6) Skip Build → Auto-Download Recommended Model"
 echo -e "7) Exit"
@@ -663,9 +663,9 @@ elif [ "$choice" == "4" ]; then
     cmake --build . --config Release -j $REC_THREADS
 
 elif [ "$choice" == "5" ]; then
-    echo -e "${G}[*] Building Universal ARMv8.2-a Cross-Compile...${N}"
+    echo -e "${G}[*] Building Universal armv8-a Cross-Compile...${N}"
     mkdir -p build-universal && cd build-universal
-    cmake .. -G Ninja -DGGML_OPENMP=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-march=armv8.2-a -mtune=generic" -DCMAKE_CXX_FLAGS="-march=armv8.2-a -mtune=generic"
+    cmake .. -G Ninja -DGGML_OPENMP=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS="-march=armv8-a -mtune=generic" -DCMAKE_CXX_FLAGS="-march=armv8-a -mtune=generic"
     cmake --build . --config Release -j $REC_THREADS
 fi
 
