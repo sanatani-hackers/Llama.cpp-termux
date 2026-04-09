@@ -94,13 +94,12 @@ These benchmarks were recorded on a Snapdragon 7 Gen 3 (Adreno 720) with 8GB of 
 | BitNet XL (1.58b) (TQ1_0) | CPU | -t 5 | Fast | Extreme low RAM usage (1-bit weights) |
 | BitNet XL (1.58b) (TQ1_0) | GPU (Turnip) | -t 3 | Stable | Runs fully offloaded to Adreno 720 |
 
----
-
 ##⚡ Snapdragon 870 (Adreno 650)
-
-Model| Backend| Threads| Speed (Tokens/Sec)|
-Llama 3.2 (1B) (Q4_K_M)| GPU (Turnip)| -t 3| ~3.82 t/s|
-Qwen 2.5 (1.5B) (Q4_K_M)| GPU (Turnip)| -t 5| ~2.79 t/s|
+These benchmarks were recorded on a Snapdragon 870 (Adreno 650) with 8GB RAM running native Termux using Vulkan (Turnip driver). Testing full GPU offload behavior, performance, and stability.
+| Model | Backend | Threads | Speed (Tokens/Sec) | Notes |
+|---|---|---|---|---|
+| Llama 3.2 (1B) (Q4_K_M) | GPU (Turnip) | -t 3 | ~3.82 t/s | 🚀 Full GPU offload (17/17 layers) |
+| Qwen 2.5 (1.5B) (Q4_K_M) | GPU (Turnip) | -t 5 | ~2.79 t/s | ⚠️ Higher latency due to contention |
 
 
 ## 🚨 Troubleshooting: Errors vs. Successes
