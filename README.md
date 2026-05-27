@@ -5,8 +5,8 @@ This repository documents the exact commands, driver configurations, and fixes n
 You don't need to manually configure compilers or compile from source. The easiest way to get started is to run our intelligent installer script. It automatically profiles your hardware, calculates memory pools, bypasses factory Adreno limits by installing Turnip (Mesa) drivers, and downloads the best models for your phone.
 ```bash
 pkg update && pkg install wget -y
-wget https://raw.githubusercontent.com/sanatani-hackers/LLama.cpp-termux/main/setup.sh
-bash setup.sh
+wget https://raw.githubusercontent.com/sanatani-hackers/LLama.cpp-termux/main/main.sh
+bash main.sh
 
 ```
 **How to run after installation:**
