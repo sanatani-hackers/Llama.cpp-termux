@@ -1,5 +1,7 @@
 # Building `llama.cpp` on Android via Termux (Complete Guide)
 
+Upstream Repository: [https://github.com/ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp)
+
 This document details the step-by-step process, environment configuration, troubleshooting resolutions, and commands used to build and verify **`llama-cli`** with **Mesa Turnip (Adreno Vulkan)** and **ARM NEON/i8mm** CPU acceleration on Android without root.
 
 ---
@@ -50,8 +52,21 @@ pkg install -y vulkan-loader-generic \
 
 ## 3. Source Tree Setup
 
-The source directory was placed at:
+The official source code is hosted at:
+- **Upstream Repository**: [https://github.com/ggml-org/llama.cpp](https://github.com/ggml-org/llama.cpp)
+
+Clone or extract into:
 [`/data/data/com.termux/files/home/llama.cpp-master`](file:///data/data/com.termux/files/home/llama.cpp-master)
+
+```bash
+cd ~
+# Either clone directly:
+git clone --depth=1 https://github.com/ggml-org/llama.cpp.git llama.cpp-master
+
+# Or download and extract the master archive:
+# wget https://github.com/ggml-org/llama.cpp/archive/refs/heads/master.tar.gz
+# tar -xvf master.tar.gz
+```
 
 Directory structure highlights:
 - `ggml/`: Core tensor computation library, CPU kernels, and Vulkan compute shaders (`.comp`)
@@ -142,7 +157,7 @@ The Mesa Turnip driver cleanly initializes the Adreno 720 GPU with 2.2 GiB free 
 
 ## 7. Recommended Inference Commands
 
-### ⚡ Option A: GPU Accelerated (Turnip Vulkan)
+### ⚡ Option A: GPU Accelerated (Qualcomm Adreno + Turnip Vulkan)
 Ideal for battery efficiency and offloading work from CPU cores. Use `-t 3` to prevent memory bus contention between CPU and GPU.
 
 ```bash
@@ -158,8 +173,8 @@ $HOME/llama.cpp-master/build-gpu/bin/llama-cli \
   -p "Explain quantum computing in simple terms."
 ```
 
-### 🚀 Option B: Pure CPU (ARM NEON + DotProd + i8mm)
-Fastest token-generation speed on modern Qualcomm chips (up to ~14+ t/s on 1B/1.5B models).
+### 🚀 Option B: Pure CPU (Qualcomm or MediaTek Dimensity/Helio)
+Fastest token-generation speed using ARM NEON vectorization.
 
 ```bash
 export LD_LIBRARY_PATH=$HOME/llama.cpp-master/build-gpu/bin:$LD_LIBRARY_PATH
@@ -175,7 +190,30 @@ $HOME/llama.cpp-master/build-gpu/bin/llama-cli \
 
 ---
 
-## 8. Summary of Troubleshooting Reference
+## 8. Guide for MediaTek Processors (Dimensity / Helio)
+
+MediaTek chips use **ARM Mali / Immortalis** GPUs, which cannot use the Turnip driver. The stock Mali Vulkan driver frequently encounters shader crashes, and memory bandwidth contention makes Mali GPU inference slower than CPU.
+
+For MediaTek devices, a **CPU-Only build** is strongly recommended:
+
+### Build Command:
+```bash
+cd ~/llama.cpp-master
+mkdir -p build-cpu && cd build-cpu
+
+cmake .. -G Ninja -DGGML_OPENMP=ON -DCMAKE_BUILD_TYPE=Release
+export ASAN_OPTIONS=detect_leaks=0
+cmake --build . --config Release --target llama-cli -j 4
+```
+
+### Optimal Thread Recommendations:
+- **Dimensity 9000/9200/9300/8300**: `-t 4` (targets the Cortex-X / Cortex-A715 performance cores).
+- **Dimensity 7000/6000 series**: `-t 2` or `-t 4` (targets big Cortex-A78 cores).
+- **Helio G99 / G85 / P35**: `-t 4` to `-t 6`.
+
+---
+
+## 9. Troubleshooting Reference
 
 | Issue Encountered | Root Cause | Fix Applied |
 | :--- | :--- | :--- |
